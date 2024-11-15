@@ -63,7 +63,7 @@ exports.login = (req, res) => {
       { id: user.id, role: user.roles },
       process.env.JWT_SECRET || "f0rmjwt",
       {
-        expiresIn: "1h",
+        expiresIn: "4h",
       }
     );
 

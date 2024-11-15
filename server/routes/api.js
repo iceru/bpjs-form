@@ -8,5 +8,7 @@ router.get('/users', verifyToken, userController.getUsers);
 router.get('/forms', verifyToken, formController.getForms);
 router.get('/form/:id', verifyToken, formController.getFormById);
 router.get('/tables', verifyToken, formController.getTable);
+router.post('/set-tables', verifyToken, formController.setForm);
+
 
 module.exports = router;

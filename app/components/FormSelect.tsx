@@ -19,7 +19,7 @@ const FormSelect: NextPage<Props> = ({ options, name, onChange, label }) => {
             {label && (
                 <label htmlFor={name} className='block mb-2'>{label}</label>
             )}
-            <select name={name} onChange={onChange}>
+            <select name={name} onChange={onChange} className='w-full lg:w-[50%] border border-gray-200 px-4 py-2 rounded-lg'>
                 {options?.map((option, i) => {
                     return (
                         <option value={option.value} key={i}>{option.label}</option>

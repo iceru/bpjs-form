@@ -56,43 +56,116 @@ const mappingTypes = (name, type) => {
 
     return data;
 }
-
 exports.setForm = (req, res) => {
     const { bg_color, border_color, table, id } = req.body;
 
     const query = "UPDATE form SET bg_color = ?, border_color = ?, `table` = ? WHERE id = ?";
     const queryForm = "SELECT * FROM form_types";
-    const queryInsert = "INSERT INTO form_id_type (form_id, form_type_id) VALUES (?, ?)"
+    const queryInsert = "INSERT INTO form_id_type (form_id, form_type_id) VALUES (?, ?)";
     const queryColumns = `
-    SELECT COLUMN_NAME, DATA_TYPE
-    FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+        SELECT COLUMN_NAME, DATA_TYPE
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+    `;
+
+    // Use a promise-based approach to manage async calls
+    const updateForm = () => {
+        return new Promise((resolve, reject) => {
+            db.query(query, [bg_color, border_color, table, id], (err, results) => {
+                if (err) return reject(err);
+                resolve();
+            });
+        });
+    };
+
+    const getColumns = () => {
+        return new Promise((resolve, reject) => {
+            db.query(queryColumns, ['formgenerator', table], (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
+        });
+    };
+
+    const getFormTypes = () => {
+        return new Promise((resolve, reject) => {
+            db.query(queryForm, (err, resForm) => {
+                if (err) return reject(err);
+                resolve(resForm);
+            });
+        });
+    };
+
+    const insertFormType = (formId, formTypeId) => {
+        return new Promise((resolve, reject) => {
+            db.query(queryInsert, [formId, formTypeId], (err, results) => {
+                if (err) return reject(err);
+                resolve();
+            });
+        });
+    };
+
+    // Main async function to handle the flow
+    const processForm = async () => {
+        try {
+            // Update the form
+            await updateForm();
+
+            // Get columns of the table
+            const columns = await getColumns();
+            if (columns.length > 0) {
+                // Get all form types
+                const formTypes = await getFormTypes();
+
+                // Iterate and check for matches
+                for (const column of columns) {
+                    for (const form of formTypes) {
+                        if (form.type === mappingTypes(column.COLUMN_NAME, column.DATA_TYPE)) {
+                            await insertFormType(id, form.id);
+                        }
+                    }
+                }
+            }
+
+            // Send a success response
+            return res.status(201).json({ message: "Form updated successfully." });
+        } catch (error) {
+            console.error('Error processing form:', error);
+            return res.status(500).json({ error: 'An error occurred during form processing.' });
+        }
+    };
+
+    // Execute the async function
+    processForm();
+};
+
+exports.getGeneratedForm = (req, res) => {
+    const { id } = req.body;
+    const queryUser = "SELECT form_id FROM users WHERE id = ?"
+    const query = `
+    SELECT 
+      form_types.type, 
+      form_types.form_type, 
+      form.id, 
+      form.bg_color, 
+      form.border_color 
+    FROM 
+      form_id_type 
+    JOIN 
+      form ON form.id = form_id_type.form_id 
+    JOIN 
+      form_types ON form_types.id = form_id_type.form_type_id 
+    WHERE 
+      form_id_type.form_id = ?;
   `;
 
-    db.query(query, [bg_color, border_color, table, id], (err, results) => {
+    db.query(queryUser, [id], (err, results) => {
         if (err) throw err;
-    });
+        const formId = results[0];
 
-    db.query(queryColumns, ['formgenerator', table], (err, results) => {
-        if (err) throw err
-        if (results.length > 0) {
-            db.query(queryForm, (err, resForm) => {
-                if (err) throw err;
-                results.forEach((item) => {
-                    resForm.forEach((form) => {
-                        console.log(form.type);
-                        console.log(mappingTypes(item.COLUMN_NAME, item.DATA_TYPE))
-                        if (form.type === mappingTypes(item.COLUMN_NAME, item.DATA_TYPE)) {
-                            db.query(queryInsert, [id, form.id], (err, results) => {
-                                if (err) throw err;
-                                return res.status(201)
-                            })
-                        }
-                    })
-                })
-            });
-        }
-        return res.status(201)
-
+        db.query(query, [formId.form_id], (err, results) => {
+            if (err) throw err;
+            res.json(results)
+        })
     })
 }

@@ -5,10 +5,12 @@ const formController = require("../controllers/formController");
 const { verifyToken } = require("../middleware/authMiddleware");
 
 router.get('/users', verifyToken, userController.getUsers);
+router.post('/update-user', verifyToken, userController.updateUsers);
 router.get('/forms', verifyToken, formController.getForms);
 router.get('/form/:id', verifyToken, formController.getFormById);
 router.get('/tables', verifyToken, formController.getTable);
 router.post('/set-tables', verifyToken, formController.setForm);
+router.post('/generate-form', verifyToken, formController.getGeneratedForm);
 
 
 module.exports = router;

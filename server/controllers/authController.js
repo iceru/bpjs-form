@@ -67,7 +67,7 @@ exports.login = (req, res) => {
       }
     );
 
-    res.json({ token });
+    res.json({ token, roles: user.roles, id: user.id });
   });
 };
 

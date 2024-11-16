@@ -30,9 +30,16 @@ export default function Login() {
         if (res.ok) {
             const data = await res.json();
             window.localStorage.setItem("auth", data.token);
-            setTimeout(() => {
-                redirect('/dashboard')
-            }, 500);
+            window.localStorage.setItem("userId", data.id)
+            if (data.roles === "admin") {
+                setTimeout(() => {
+                    redirect('/dashboard')
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    redirect('/form')
+                }, 500);
+            }
         }
 
     }

@@ -7,14 +7,15 @@ interface Props {
     label?: string;
     value?: string | IColor;
     type?: "text" | "email" | "tel" | "url" | "password";
+    borderColor?: string
 }
 
-const FormInput: NextPage<Props> = ({ name, placeholder, type, label, value }) => {
+const FormInput: NextPage<Props> = ({ name, placeholder, type, label, value, borderColor }) => {
     return <div className='mb-4'>
         {label && (
             <label className='block mb-1' htmlFor={name}>{label}</label>
         )}
-        <input name={name} defaultValue={value} className='border border-gray-300 rounded-md px-4 py-2 w-full lg:w-[70%]' type={type || 'text'} placeholder={placeholder} />
+        <input style={{ borderColor }} name={name} defaultValue={value} className='border border-gray-300 rounded-md px-4 py-2 w-full lg:w-[70%]' type={type || 'text'} placeholder={placeholder} />
     </div>
 }
 

@@ -3,11 +3,12 @@ import React from 'react'
 
 interface Props {
     submit?: (event: React.FormEvent<HTMLFormElement>) => void
-    children: React.ReactNode
+    children: React.ReactNode;
+    className?: string;
 }
 
-const FormMain: NextPage<Props> = ({ submit, children }) => {
-    return <form onSubmit={submit}>
+const FormMain: NextPage<Props> = ({ submit, children, className }) => {
+    return <form onSubmit={submit} className={className}>
         {children}
     </form>
 }

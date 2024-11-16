@@ -61,14 +61,13 @@ exports.setForm = (req, res) => {
 
     const query = "UPDATE form SET bg_color = ?, border_color = ?, `table` = ? WHERE id = ?";
     const queryForm = "SELECT * FROM form_types";
-    const queryInsert = "INSERT INTO form_id_type (form_id, form_type_id) VALUES (?, ?)";
+    const queryInsert = "INSERT INTO form_id_type (form_id, form_type_id, label) VALUES (?, ?, ?)";
     const queryColumns = `
         SELECT COLUMN_NAME, DATA_TYPE
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
     `;
 
-    // Use a promise-based approach to manage async calls
     const updateForm = () => {
         return new Promise((resolve, reject) => {
             db.query(query, [bg_color, border_color, table, id], (err, results) => {
@@ -96,38 +95,32 @@ exports.setForm = (req, res) => {
         });
     };
 
-    const insertFormType = (formId, formTypeId) => {
+    const insertFormType = (formId, formTypeId, label) => {
         return new Promise((resolve, reject) => {
-            db.query(queryInsert, [formId, formTypeId], (err, results) => {
+            db.query(queryInsert, [formId, formTypeId, label], (err, results) => {
                 if (err) return reject(err);
                 resolve();
             });
         });
     };
 
-    // Main async function to handle the flow
     const processForm = async () => {
         try {
-            // Update the form
             await updateForm();
 
-            // Get columns of the table
             const columns = await getColumns();
             if (columns.length > 0) {
-                // Get all form types
                 const formTypes = await getFormTypes();
 
-                // Iterate and check for matches
                 for (const column of columns) {
                     for (const form of formTypes) {
                         if (form.type === mappingTypes(column.COLUMN_NAME, column.DATA_TYPE)) {
-                            await insertFormType(id, form.id);
+                            await insertFormType(id, form.id, column.COLUMN_NAME);
                         }
                     }
                 }
             }
 
-            // Send a success response
             return res.status(201).json({ message: "Form updated successfully." });
         } catch (error) {
             console.error('Error processing form:', error);
@@ -135,7 +128,6 @@ exports.setForm = (req, res) => {
         }
     };
 
-    // Execute the async function
     processForm();
 };
 
@@ -147,7 +139,9 @@ exports.getGeneratedForm = (req, res) => {
       form_types.type, 
       form_types.form_type, 
       form.id, 
+      form_id_type.label,
       form.bg_color, 
+      form.table,
       form.border_color 
     FROM 
       form_id_type 
